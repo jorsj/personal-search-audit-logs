@@ -1,0 +1,13 @@
+# ---------------------------------------------------------------------------
+# Ejemplo para el Proyecto 2 (Destino: BigQuery)
+# Copiar como `terraform.tfvars` y reemplazar los valores.
+# ---------------------------------------------------------------------------
+
+bigquery_project_id = "mi-proyecto-2-bigquery"
+
+# Obtenido de `terraform -chdir=../project-1-sink output -raw sink_writer_identity`
+sink_writer_identity = "serviceAccount:service-NUMERO_PROYECTO_1@gcp-sa-logging.iam.gserviceaccount.com"
+
+# Opcionales:
+# bigquery_dataset_id = "personal_search_audit_logs"
+# bigquery_location   = "US"

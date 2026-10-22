@@ -1,0 +1,11 @@
+# ---------------------------------------------------------------------------
+# Ejemplo para el Proyecto 1 (Origen: Personal Search + Sink)
+# Copiar como `terraform.tfvars` y reemplazar los Project IDs.
+# ---------------------------------------------------------------------------
+
+app_project_id      = "mi-proyecto-1-personal-search"
+bigquery_project_id = "mi-proyecto-2-bigquery"
+
+# Opcionales:
+# bigquery_dataset_id = "personal_search_audit_logs"
+# sink_name           = "personal-search-audit-logs-to-bq"
