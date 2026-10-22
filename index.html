@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Search — Exportación de Audit Logs a BigQuery (Terraform & Guía)</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #475569;
+      --primary: #1a73e8;
+      --primary-hover: #1557b0;
+      --code-bg: #0f172a;
+      --code-text: #f8fafc;
+      --badge-bg: #e8f0fe;
+      --badge-text: #1967d2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 32px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+      margin-bottom: 24px;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+      letter-spacing: 0.02em;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: 26px;
+      line-height: 1.3;
+    }
+    h2 {
+      font-size: 19px;
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 {
+      font-size: 15px;
+      margin: 20px 0 8px;
+      color: var(--text);
+    }
+    p {
+      margin: 0 0 14px;
+      color: var(--muted);
+    }
+    .downloads {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+    }
+    ul {
+      margin: 0 0 14px;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 5px;
+      color: #0f172a;
+    }
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1e293b;
+      color: #cbd5e1;
+      padding: 8px 14px;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    .copy-btn {
+      background: #334155;
+      color: #f8fafc;
+      border: none;
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      background: #475569;
+    }
+    pre {
+      margin: 0 0 16px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 14px 16px;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 18px;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <span class="badge">Google Cloud · Personal Search</span>
+      <h1>Terraform e instrucciones: Exportación de Audit Logs (Búsqueda y Apertura de Documentos) a BigQuery</h1>
+      <p style="color: var(--text);">
+        Hola Ale, Diego, Octavio y equipo, buenas tardes.<br><br>
+        Les comparto los módulos de Terraform, las instrucciones paso a paso y las consultas de BigQuery para exportar los <strong>Data Access Audit Logs (<code>DATA_READ</code>)</strong> de <strong>Personal Search</strong> (cuando un usuario realiza una búsqueda o abre un documento) desde el <strong>Proyecto 1</strong> (donde vive la app y el stack de búsqueda) hacia una tabla particionada de BigQuery en el <strong>Proyecto 2</strong>.
+      </p>
+      <div class="downloads">
+        <a class="btn btn-primary" href="personal-search-audit-logs-terraform.zip" download="personal-search-audit-logs-terraform.zip">
+          ⬇ Descargar personal-search-audit-logs-terraform.zip
+        </a>
+        <a class="btn btn-secondary" href="README.md" download="README.md">
+          ⬇ Descargar README.md
+        </a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>1. Documentación pública de Google Cloud (Esquema de tabla y Payloads)</h2>
+      <ul>
+        <li>
+          <strong>Estructura de la tabla de Cloud Logging exportada a BigQuery (<code>LogEntry</code> &rarr; <code>cloudaudit_googleapis_com_data_access</code>)</strong>:<br>
+          <a href="https://cloud.google.com/logging/docs/export/bigquery#bigquery-schema" target="_blank" rel="noopener">https://cloud.google.com/logging/docs/export/bigquery#bigquery-schema</a>
+        </li>
+        <li>
+          <strong>Definición oficial del payload <code>google.cloud.audit.AuditLog</code> (<code>protopayload_auditlog</code>)</strong>:<br>
+          <a href="https://cloud.google.com/logging/docs/reference/audit/auditlog/rest/Shared.Types/AuditLog" target="_blank" rel="noopener">https://cloud.google.com/logging/docs/reference/audit/auditlog/rest/Shared.Types/AuditLog</a>
+        </li>
+        <li>
+          <strong>Guía general de Cloud Audit Logs</strong>:<br>
+          <a href="https://cloud.google.com/logging/docs/audit/understanding-audit-logs" target="_blank" rel="noopener">https://cloud.google.com/logging/docs/audit/understanding-audit-logs</a>
+        </li>
+        <li>
+          <strong>Audit Logging de Discovery Engine (<code>discoveryengine.googleapis.com</code> / <code>SearchService.Search</code>)</strong>:<br>
+          <a href="https://cloud.google.com/generative-ai-app-builder/docs/audit-logging" target="_blank" rel="noopener">https://cloud.google.com/generative-ai-app-builder/docs/audit-logging</a>
+        </li>
+        <li>
+          <strong>Audit Logging de Cloud Storage (<code>storage.googleapis.com</code> / <code>storage.objects.get</code>)</strong>:<br>
+          <a href="https://cloud.google.com/storage/docs/audit-logging" target="_blank" rel="noopener">https://cloud.google.com/storage/docs/audit-logging</a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>2. Eventos capturados para medir Búsquedas y CTR de Documentos</h2>
+      <p>Solo se habilitan y filtran las dos llamadas necesarias para medir impresiones de búsqueda y aperturas reales de documentos (sin ruido de otras APIs):</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Acción del Usuario</th>
+            <th><code>protoPayload.serviceName</code></th>
+            <th><code>protoPayload.methodName</code></th>
+            <th><code>auditConfig</code> en Proyecto 1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Buscar documentos</strong> (<code>POST /api/search</code>)</td>
+            <td><code>discoveryengine.googleapis.com</code></td>
+            <td><code>google.cloud.discoveryengine.v1.SearchService.Search</code></td>
+            <td><code>DATA_READ</code></td>
+          </tr>
+          <tr>
+            <td><strong>Abrir un documento</strong> (lectura/descarga del PDF en GCS vía URL firmada)</td>
+            <td><code>storage.googleapis.com</code></td>
+            <td><code>storage.objects.get</code></td>
+            <td><code>DATA_READ</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>3. Estructura de la tabla en BigQuery y Schema de los Payloads</h2>
+      <p>Al usar un sink con <code>use_partitioned_tables = true</code>, Cloud Logging crea automáticamente en el <strong>Proyecto 2</strong> la tabla particionada por día:<br>
+      <code>&lt;PROYECTO_2_BIGQUERY&gt;.&lt;DATASET_ID&gt;.cloudaudit_googleapis_com_data_access</code></p>
+
+      <h3>Columnas de nivel superior de la tabla</h3>
+      <ul>
+        <li><code>timestamp</code> (<code>TIMESTAMP</code>): Fecha y hora exacta del evento (columna de partición diaria).</li>
+        <li><code>insertId</code> (<code>STRING</code>): ID único de la entrada de log.</li>
+        <li><code>logName</code> (<code>STRING</code>): <code>projects/&lt;PROYECTO_1&gt;/logs/cloudaudit.googleapis.com%2Fdata_access</code>.</li>
+        <li><code>severity</code> (<code>STRING</code>): Severidad (<code>INFO</code>, <code>NOTICE</code>, <code>ERROR</code>).</li>
+        <li><code>resource</code> (<code>RECORD</code>): <code>resource.type</code> (<code>audited_resource</code> / <code>gcs_bucket</code>) y <code>resource.labels</code> (<code>project_id</code>, <code>service</code>, <code>method</code>).</li>
+        <li><code>protopayload_auditlog</code> (<code>RECORD</code>): Contiene el payload <code>google.cloud.audit.AuditLog</code> con todo el detalle de la llamada a la API.</li>
+      </ul>
+
+      <h3>Campos clave dentro de <code>protopayload_auditlog</code></h3>
+      <ul>
+        <li><code>protopayload_auditlog.serviceName</code> (<code>STRING</code>): <code>discoveryengine.googleapis.com</code> o <code>storage.googleapis.com</code>.</li>
+        <li><code>protopayload_auditlog.methodName</code> (<code>STRING</code>): <code>google.cloud.discoveryengine.v1.SearchService.Search</code> o <code>storage.objects.get</code>.</li>
+        <li><code>protopayload_auditlog.resourceName</code> (<code>STRING</code>):
+          <ul>
+            <li>En búsquedas: <code>projects/&lt;PROYECTO_1&gt;/locations/global/collections/default_collection/engines/&lt;ENGINE_ID&gt;/servingConfigs/default_search</code></li>
+            <li>En apertura de documentos: <code>projects/_/buckets/&lt;BUCKET_NAME&gt;/objects/&lt;RUTA_ARCHIVO.pdf&gt;</code></li>
+          </ul>
+        </li>
+        <li><code>protopayload_auditlog.authenticationInfo.principalEmail</code> (<code>STRING</code>): Cuenta autenticada que ejecutó la llamada.</li>
+        <li><code>protopayload_auditlog.requestMetadata.callerIp</code> (<code>STRING</code>): IP del cliente (y <code>callerSuppliedUserAgent</code>).</li>
+        <li><code>protopayload_auditlog.requestJson</code> (<code>STRING</code> en formato JSON): Parámetros de entrada (<code>SearchRequest</code>).</li>
+        <li><code>protopayload_auditlog.responseJson</code> (<code>STRING</code> en formato JSON): Respuesta de la API (<code>SearchResponse</code>). En <code>SearchService.Search</code>, el array <code>$.results[*].id</code> trae los IDs de los documentos devueltos como resultados en esa búsqueda.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>4. Orden e Instrucciones de Ejecución (Primero Proyecto 1 y después Proyecto 2)</h2>
+      <p>El paquete <code>personal-search-audit-logs-terraform.zip</code> contiene dos carpetas independientes (<code>project-1-sink</code> y <code>project-2-bigquery</code>):</p>
+
+      <h3>Paso 1 — Ejecutar primero <code>project-1-sink</code> (en el Proyecto 1 donde vive Personal Search)</h3>
+      <p>Cloud Logging permite crear el sink apuntando al dataset del Proyecto 2 aunque ese dataset todavía no exista, y en ese momento aprovisiona la cuenta de servicio única del sink (<code>sink_writer_identity = serviceAccount:service-&lt;PROJECT_1_NUMBER&gt;@gcp-sa-logging.iam.gserviceaccount.com</code>).</p>
+      <div class="code-header">
+        <span>bash — Proyecto 1</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+      </div>
+      <pre><code>cd audit-logs/project-1-sink
+cp terraform.tfvars.example terraform.tfvars
+# Editar terraform.tfvars con app_project_id (Proyecto 1) y bigquery_project_id (Proyecto 2)
+terraform init
+terraform apply
+
+# Copiar el writer identity para pasarlo al Proyecto 2:
+terraform output -raw sink_writer_identity</code></pre>
+
+      <h3>Paso 2 — Ejecutar después <code>project-2-bigquery</code> (en el Proyecto 2 donde vive BigQuery)</h3>
+      <p>Crea el dataset en BigQuery y le asigna el rol <code>roles/bigquery.dataEditor</code> al <code>sink_writer_identity</code> obtenido en el Paso 1.</p>
+      <div class="code-header">
+        <span>bash — Proyecto 2</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+      </div>
+      <pre><code>cd audit-logs/project-2-bigquery
+cp terraform.tfvars.example terraform.tfvars
+# Editar terraform.tfvars con bigquery_project_id (Proyecto 2) y sink_writer_identity
+terraform init
+terraform apply</code></pre>
+    </div>
+
+    <div class="card">
+      <h2>5. Consultas SQL en BigQuery (Proyecto 2)</h2>
+
+      <h3>5.1. Ver eventos recientes (<code>SEARCH</code> y <code>DOCUMENT_OPEN</code>)</h3>
+      <div class="code-header">
+        <span>BigQuery SQL — Eventos recientes</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+      </div>
+      <pre><code>SELECT
+  timestamp,
+  CASE
+    WHEN protopayload_auditlog.serviceName = 'discoveryengine.googleapis.com' THEN 'SEARCH'
+    WHEN protopayload_auditlog.serviceName = 'storage.googleapis.com'         THEN 'DOCUMENT_OPEN'
+  END AS user_action,
+  protopayload_auditlog.serviceName AS service_name,
+  protopayload_auditlog.methodName AS method_name,
+  protopayload_auditlog.resourceName AS resource_name,
+  protopayload_auditlog.authenticationInfo.principalEmail AS principal_email,
+  protopayload_auditlog.requestMetadata.callerIp AS caller_ip
+FROM
+  `&lt;PROYECTO_2_BIGQUERY&gt;.personal_search_audit_logs.cloudaudit_googleapis_com_data_access`
+WHERE
+  TIMESTAMP_TRUNC(timestamp, DAY) &gt;= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+ORDER BY
+  timestamp DESC
+LIMIT 100;</code></pre>
+
+      <h3>5.2. Calcular el CTR por Documento</h3>
+      <p>Al indexar archivos desde Cloud Storage (<code>gs://&lt;bucket&gt;/&lt;objeto&gt;</code>), Discovery Engine genera el <code>doc_id</code> tomando los primeros 32 caracteres hexadecimales de <code>SHA256("gs://&lt;bucket&gt;/&lt;objeto&gt;")</code> (<code>SUBSTR(TO_HEX(SHA256(gcs_uri)), 1, 32)</code>), y en <code>protopayload_auditlog.responseJson</code> guarda los <code>$.results[*].id</code> devueltos en cada búsqueda. Cruzando ese <code>doc_id</code> con las aperturas en <code>storage.objects.get</code> se obtiene el CTR por documento:</p>
+      <div class="code-header">
+        <span>BigQuery SQL — CTR por documento</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+      </div>
+      <pre><code>WITH
+  impressions AS (
+    SELECT
+      JSON_VALUE(result, '$.id') AS doc_id,
+      COUNT(*) AS search_impressions
+    FROM
+      `&lt;PROYECTO_2_BIGQUERY&gt;.personal_search_audit_logs.cloudaudit_googleapis_com_data_access`,
+      UNNEST(JSON_QUERY_ARRAY(protopayload_auditlog.responseJson, '$.results')) AS result
+    WHERE
+      protopayload_auditlog.serviceName = 'discoveryengine.googleapis.com'
+      AND protopayload_auditlog.methodName = 'google.cloud.discoveryengine.v1.SearchService.Search'
+    GROUP BY
+      doc_id
+  ),
+  clicks AS (
+    SELECT
+      gcs_uri,
+      SUBSTR(TO_HEX(SHA256(gcs_uri)), 1, 32) AS doc_id,
+      COUNT(*) AS document_opens
+    FROM (
+      SELECT
+        CONCAT(
+          'gs://',
+          REGEXP_EXTRACT(protopayload_auditlog.resourceName, r'buckets/([^/]+)/objects/'),
+          '/',
+          REGEXP_EXTRACT(protopayload_auditlog.resourceName, r'buckets/[^/]+/objects/(.+)$')
+        ) AS gcs_uri
+      FROM
+        `&lt;PROYECTO_2_BIGQUERY&gt;.personal_search_audit_logs.cloudaudit_googleapis_com_data_access`
+      WHERE
+        protopayload_auditlog.serviceName = 'storage.googleapis.com'
+        AND protopayload_auditlog.methodName = 'storage.objects.get'
+    )
+    GROUP BY
+      gcs_uri
+  )
+SELECT
+  COALESCE(c.gcs_uri, CONCAT('doc_id:', i.doc_id)) AS document,
+  i.doc_id,
+  IFNULL(i.search_impressions, 0) AS impressions,
+  IFNULL(c.document_opens, 0) AS opens,
+  ROUND(SAFE_DIVIDE(IFNULL(c.document_opens, 0), i.search_impressions) * 100, 2) AS ctr_pct
+FROM
+  impressions i
+FULL OUTER JOIN
+  clicks c
+USING (doc_id)
+ORDER BY
+  opens DESC, impressions DESC;</code></pre>
+    </div>
+
+    <div class="card">
+      <h2>6. Archivos incluidos en <code>personal-search-audit-logs-terraform.zip</code></h2>
+
+      <h3>Módulo 1: <code>audit-logs/project-1-sink/main.tf</code></h3>
+      <div class="code-header">
+        <span>project-1-sink/main.tf</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+      </div>
+      <pre><code>locals {
+  sink_filter = &lt;&lt;-EOT
+    log_id("cloudaudit.googleapis.com/data_access")
+    AND (
+      (
+        protoPayload.serviceName="discoveryengine.googleapis.com" AND
+        protoPayload.methodName="google.cloud.discoveryengine.v1.SearchService.Search"
+      )
+      OR (
+        protoPayload.serviceName="storage.googleapis.com" AND
+        protoPayload.methodName="storage.objects.get"
+      )
+    )
+  EOT
+
+  audit_config_services = toset([
+    "discoveryengine.googleapis.com",
+    "storage.googleapis.com",
+  ])
+
+  required_apis = toset([
+    "logging.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "serviceusage.googleapis.com",
+    "discoveryengine.googleapis.com",
+    "storage.googleapis.com",
+  ])
+}
+
+resource "google_project_service" "apis" {
+  for_each = local.required_apis
+
+  project            = var.app_project_id
+  service            = each.value
+  disable_on_destroy = false
+}
+
+resource "google_project_iam_audit_config" "user_actions" {
+  for_each = local.audit_config_services
+
+  project = var.app_project_id
+  service = each.value
+
+  audit_log_config {
+    log_type = "DATA_READ"
+  }
+
+  depends_on = [
+    google_project_service.apis,
+  ]
+}
+
+resource "google_logging_project_sink" "audit_logs" {
+  project     = var.app_project_id
+  name        = var.sink_name
+  description = "Exporta los Data Access Audit Logs de búsqueda (Discovery Engine) y apertura de documentos (GCS) hacia BigQuery en ${var.bigquery_project_id}:${var.bigquery_dataset_id}."
+
+  destination = "bigquery.googleapis.com/projects/${var.bigquery_project_id}/datasets/${var.bigquery_dataset_id}"
+  filter      = local.sink_filter
+
+  unique_writer_identity = true
+
+  bigquery_options {
+    use_partitioned_tables = true
+  }
+
+  depends_on = [
+    google_project_service.apis,
+  ]
+}</code></pre>
+
+      <h3>Módulo 2: <code>audit-logs/project-2-bigquery/main.tf</code></h3>
+      <div class="code-header">
+        <span>project-2-bigquery/main.tf</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+      </div>
+      <pre><code>locals {
+  resolved_sink_writer_identity = (
+    var.sink_writer_identity != null
+    ? var.sink_writer_identity
+    : "serviceAccount:service-${var.app_project_number}@gcp-sa-logging.iam.gserviceaccount.com"
+  )
+
+  required_apis = toset([
+    "bigquery.googleapis.com",
+    "bigquerystorage.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "logging.googleapis.com",
+    "serviceusage.googleapis.com",
+  ])
+}
+
+resource "google_project_service" "apis" {
+  for_each = local.required_apis
+
+  project            = var.bigquery_project_id
+  service            = each.value
+  disable_on_destroy = false
+}
+
+resource "google_bigquery_dataset" "audit_logs" {
+  project       = var.bigquery_project_id
+  dataset_id    = var.bigquery_dataset_id
+  friendly_name = "Personal Search Audit Logs"
+  description   = "Audit logs (DATA_READ) de búsquedas (Discovery Engine) y apertura de documentos (GCS) de Personal Search."
+  location      = var.bigquery_location
+
+  labels = {
+    managed_by = "terraform"
+    purpose    = "personal-search-audit-logs"
+  }
+
+  depends_on = [
+    google_project_service.apis,
+  ]
+}
+
+resource "google_bigquery_dataset_iam_member" "sink_writer" {
+  project    = var.bigquery_project_id
+  dataset_id = google_bigquery_dataset.audit_logs.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = local.resolved_sink_writer_identity
+}</code></pre>
+    </div>
+  </div>
+
+  <script>
+    function copyCode(btn) {
+      const code = btn.parentElement.nextElementSibling.innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const prev = btn.innerText;
+        btn.innerText = "✓ Copiado";
+        setTimeout(() => { btn.innerText = prev; }, 1800);
+      });
+    }
+  </script>
+</body>
+</html>
